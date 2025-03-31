@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Grocery Shopping List Generator</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f4f7f6;
+            color: #333;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #fff;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            text-align: center;
+            color: #4CAF50;
+        }
+        input[type="text"], input[type="number"], input[type="password"] {
+            width: 70%;
+            padding: 10px;
+            margin-bottom: 10px;
+            font-size: 16px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            border: none;
+            background-color: #4CAF50;
+            color: white;
+            border-radius: 4px;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        .shopping-list ul {
+            list-style-type: none;
+            padding: 0;
+            margin-top: 20px;
+        }
+        .shopping-list li {
+            margin: 10px 0;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background-color: #f9f9f9;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .shopping-list li.purchased {
+            background-color: #e0f7e0;
+            text-decoration: line-through;
+            color: #4CAF50;
+        }
+        .shopping-list button {
+            background-color: #f44336;
+            padding: 5px 10px;
+            font-size: 12px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .shopping-list button:hover {
+            background-color: #d32f2f;
+        }
+        .clear-list {
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #f44336;
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+            border-radius: 4px;
+        }
+        .clear-list:hover {
+            background-color: #d32f2f;
+        }
+        .message {
+            font-size: 16px;
+            text-align: center;
+            color: #4CAF50;
+            margin-top: 10px;
+        }
+        .login-container, .logout-container {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .shopping-list-container {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+
+ <Login Section>
+ <div class="container">
+ <div id="loginContainer" class="login-container">
+ <h1>Login to Continue</h1>
+ <input type="text" id="username" placeholder="Enter username">
+ <input type="password" id="password" placeholder="Enter password">
+ <button onclick="login()">Login</button>
+ </div>
+</div>
+
+    <Shopping List Section (Initially Hidden)>
+    <div class="container shopping-list-container" id="shoppingListContainer">
+    <h1>Grocery Shopping List</h1>
+    <Logout Section>
+    <div id="logoutContainer" class="logout-container">
+    <h2>Welcome, <span id="userNameDisplay"></span></h2>
+    <button onclick="logout()">Logout</button>
+    </div>
+
+    <Input for adding new shopping list items with quantity>
+    <label for="newItem">Enter items (separate with commas):</label>
+    <input type="text" id="newItem" placeholder="e.g. Rice, Milk, Eggs">
+    <label for="itemQuantity">Enter quantity (e.g. 2, 3, 1):</label>
+    <input type="number" id="itemQuantity" placeholder="e.g. 2">
+    <button onclick="addItems()">Add Items</button>
+
+    <Shopping List>
+    <div class="shopping-list">
+    <h2>Your Shopping List</h2>
+     <ul id="shoppingList"></ul>
+     </div>
+     <Clear List Button>
+        <button class="clear-list" onclick="clearList()">Clear All Items</button>
+
+        <Feedback Message >
+        <div class="message" id="message"></div>
+        <Download Buttons>
+        <button onclick="downloadListAsText()">Download List (Text)</button>
+        <button onclick="downloadListAsJSON()">Download List (JSON)</button>
+    </div>
+
+    <script>
+        // Function to save user login information
+        function saveUserLogin(username) {
+            localStorage.setItem('username', username);
+        }
+
+        // Function to get user login status
+        function getUserLogin() {
+            return localStorage.getItem('username');
+        }
+
+        // Login function
+        function login() {
+        const username = document.getElementById("username").value.trim();
+        const password = document.getElementById("password").value.trim();
+
+       if (username && password) {
+       saveUserLogin(username);
+
+        // Hide login form and show shopping list form
+        document.getElementById("loginContainer").style.display = 'none';
+        document.getElementById("shoppingListContainer").style.display = 'block';
+
+        // Display the username in the logout container
+        document.getElementById("userNameDisplay").textContent = username;
+
+        // Clear inputs and display success message
+        document.getElementById("username").value = '';
+        document.getElementById("password").value = '';
+        showMessage("Logged in successfully!");
+        } else {
+        alert("Please enter both username and password.");
+        }
+        }
+
+        // Logout function
+        function logout() {
+         localStorage.removeItem('username');
+         document.getElementById("loginContainer").style.display = 'block';
+         document.getElementById("shoppingListContainer").style.display = 'none';
+         showMessage("Logged out successfully!");
+        }
+
+        // Function to save the shopping list to localStorage
+        function saveShoppingList(items) {
+        const username = getUserLogin();
+        if (username) {
+         localStorage.setItem(`${username}_shoppingList`, JSON.stringify(items)); 
+        }
+        }
+
+        // Function to display the shopping list on the page
+        function displayShoppingList(items) {
+        const shoppingListContainer = document.getElementById("shoppingList");
+        shoppingListContainer.innerHTML = ''; 
+
+         items.forEach((item, index) => {
+         const listItem = document.createElement("li");
+         listItem.textContent = `${item.name} - Quantity: ${item.quantity}`;
+
+          // Mark as purchased
+          listItem.onclick = function () {
+          this.classList.toggle("purchased");
+          updateShoppingList();
+          };
+
+          // Remove item
+           const removeButton = document.createElement("button");
+           removeButton.textContent = "Remove";
+           removeButton.onclick = function (event) {
+           event.stopPropagation(); 
+           removeItem(index);
+           };
+
+           listItem.appendChild(removeButton);
+           shoppingListContainer.appendChild(listItem);
+            });
+        }
+
+        // Function to add items with quantity to the list
+        function addItems() {
+            const newItemInput = document.getElementById("newItem").value.trim();
+            const quantityInput = document.getElementById("itemQuantity").value.trim();
+
+            if (!newItemInput || !quantityInput || isNaN(quantityInput) || quantityInput <= 0) {
+                alert("Please enter valid item and quantity.");
+                return;
+            }
+
+            const itemsArray = newItemInput.split(',').map(item => item.trim());
+            let shoppingList = JSON.parse(localStorage.getItem(`${getUserLogin()}_shoppingList`)) || [];
+
+            itemsArray.forEach(item => {
+                shoppingList.push({ name: item, quantity: parseInt(quantityInput) });
+            });
+
+            saveShoppingList(shoppingList);
+            displayShoppingList(shoppingList);
+            document.getElementById("newItem").value = '';
+            document.getElementById("itemQuantity").value = '';
+            showMessage("Items added successfully!");
+        }
+
+        // Function to remove an item from the list
+        function removeItem(index) {
+        let shoppingList = JSON.parse(localStorage.getItem(`${getUserLogin()}_shoppingList`)) || [];
+        shoppingList.splice(index, 1); 
+        saveShoppingList(shoppingList);
+         displayShoppingList(shoppingList);
+         showMessage("Item removed successfully!");
+        }
+
+        // Function to update the shopping list in localStorage after marking as purchased
+        function updateShoppingList() {
+            const items = Array.from(document.getElementById("shoppingList").children)
+                .map(item => item.classList.contains("purchased") ? item.textContent : item.textContent);
+            saveShoppingList(items);
+        }
+
+        // Function to display feedback messages
+        function showMessage(message) {
+            const messageContainer = document.getElementById("message");
+            messageContainer.textContent = message;
+            setTimeout(() => {
+                messageContainer.textContent = ''; 
+            }, 3000);
+        }
+
+        // Function to clear all items from the list
+        function clearList() {
+            localStorage.removeItem(`${getUserLogin()}_shoppingList`);
+            displayShoppingList([]);
+            showMessage("All items cleared!");
+        }
+
+        // Function to download the shopping list as a .txt file
+        function downloadListAsText() {
+            const shoppingList = JSON.parse(localStorage.getItem(`${getUserLogin()}_shoppingList`)) || [];
+
+            if (shoppingList.length === 0) {
+                alert("Your shopping list is empty!");
+                return;
+            }
+
+            let textContent = "Shopping List:\n";
+            shoppingList.forEach(item => {
+                textContent += `${item.name} - Quantity: ${item.quantity}\n`;
+            });
+
+            const blob = new Blob([textContent], { type: 'text/plain' });
+            const link = document.createElement("a");
+            link.href = URL.createObjectURL(blob);
+            link.download = "shopping_list.txt";
+            link.click();
+        }
+
+        // Function to download the shopping list as a .json file
+        function downloadListAsJSON() {
+            const shoppingList = JSON.parse(localStorage.getItem(`${getUserLogin()}_shoppingList`)) || [];
+
+            if (shoppingList.length === 0) {
+                alert("Your shopping list is empty!");
+                return;
+            }
+
+            const jsonContent = JSON.stringify(shoppingList, null, 2);
+            const blob = new Blob([jsonContent], { type: 'application/json' });
+            const link = document.createElement("a");
+            link.href = URL.createObjectURL(blob);
+            link.download = "shopping_list.json";
+            link.click();
+        }
+
+        // On page load, check if a user is logged in and display the list
+        window.onload = function () {
+            const loggedInUser = getUserLogin();
+
+            if (loggedInUser) {
+                document.getElementById("loginContainer").style.display = 'none';
+                document.getElementById("shoppingListContainer").style.display = 'block';
+                document.getElementById("userNameDisplay").textContent = loggedInUser;
+
+                const shoppingList = JSON.parse(localStorage.getItem(`${loggedInUser}_shoppingList`)) || [];
+                displayShoppingList(shoppingList);
+            }
+        }
+    </script>
+</body>
+</html>
+
